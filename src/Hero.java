@@ -59,6 +59,17 @@ public abstract class Hero extends Combatant {
         }
     }
 
+    // return stat amount by request of its name
+    public int getStat(String stat) {
+        if (stat.equals("Strength")) {
+            return strength;
+        } else if (stat.equals("Dexterity")) {
+            return dexterity;
+        } else {
+            return agility;
+        }
+    }
+
     public boolean spendGold(int amount) {
         if (amount > gold) {
             return false;

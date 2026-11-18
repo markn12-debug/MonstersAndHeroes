@@ -7,6 +7,6 @@ public class InaccessibleTile extends Tile {
     }
 
     public char getSymbol() {
-        return 'X';
+        return 'I';
     }
 }

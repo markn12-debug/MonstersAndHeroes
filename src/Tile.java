@@ -11,6 +11,16 @@ public abstract class Tile {
         return true;
     }
 
+    // a hero can clear obstacles
+    // when he does so, the map swaps in a tile returned by remove()
+    public boolean isRemovable() {
+        return false;
+    }
+
+    public Tile remove() {
+        return this;
+    }
+
     public abstract char getSymbol();
 
     public String toString() {
