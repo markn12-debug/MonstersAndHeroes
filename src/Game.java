@@ -27,9 +27,10 @@ public abstract class Game {
             System.out.println("2: Order and Chaos");
             System.out.println("3: Super Tic-Tac-Toe");
             System.out.println("4: Monsters and Heroes");
+            System.out.println("5: Legends of Valor");
 
             String choice = input.nextLine();
-            while(!choice.equals("1") && !choice.equals("2") && !choice.equals("3") && !choice.equals("4")) {
+            while(!choice.equals("1") && !choice.equals("2") && !choice.equals("3") && !choice.equals("4") && !choice.equals("5")) {
                 System.out.println("Invalid choice. Please enter 1, 2, 3, or 4.");
                 choice = input.nextLine();
             }
@@ -44,8 +45,11 @@ public abstract class Game {
             else if (choice.equals("3")){
                 game = new SuperTicTacToe(p1,p2);
             }
-            else {
+            else if (choice.equals("4")) {
                 game = new MonstersAndHeroes();
+            }
+            else {
+                game = new LegendsOfValor();
             }
 
             game.play();
