@@ -61,5 +61,6 @@ public abstract class LaneTile extends Tile {
     protected void onMonsterEnter(Monster monster) {}
     protected void onHeroLeave(Hero hero) {}
     protected void onMonsterLeave(Monster monster) {}
+    
 
 }
