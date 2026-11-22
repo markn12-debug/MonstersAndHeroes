@@ -139,7 +139,7 @@ public class ValorMap extends Grid<Tile> {
 
     // chcks if a combatan cna stand on a tile (checks all avaialble rules)
     private boolean canStand(Combatant combatant, int row, int col) {
-        if (!inBounds(row, col) || !(getCell(row, col) instanceof LaneTile)) {
+        if (!inBounds(row, col) || !(getCell(row, col) instanceof LaneTile) || !getCell(row, col).isAccessible()) {
             return false;
         }
 
@@ -165,7 +165,7 @@ public class ValorMap extends Grid<Tile> {
         if (pos != null) {
             leaveTile(monster, pos[0], pos[1]);
         }
-
+        positions.remove(monster);
         labels.remove(monster);
     }
 
@@ -227,7 +227,7 @@ public class ValorMap extends Grid<Tile> {
         int leftCol = (col / LANE_STRIDE) * LANE_STRIDE; // left column of the same lane
         
         for (int row = 0; row < SIZE; row++) {
-            for (int c = leftCol; col < leftCol + LANE_WIDTH; c++) {
+            for (int c = leftCol; c < leftCol + LANE_WIDTH; c++) {
                 LaneTile laneTile = (LaneTile) getCell(row, c);
                 boolean hasEnemy = (combatant instanceof Hero) ? laneTile.getMonster() != null : laneTile.getHero() != null;
 
@@ -309,7 +309,7 @@ public class ValorMap extends Grid<Tile> {
             for (int col=0; col < SIZE; col++) {
                 result += "|" + cellToString(row, col);
             }
-            result += "\n" + border;
+            result += "|\n" + border;
         }
 
         return result;
@@ -323,8 +323,8 @@ public class ValorMap extends Grid<Tile> {
         }
         LaneTile laneTile = (LaneTile)tile;
 
-        String hero = " ";
-        String monster = " ";
+        String hero = "  ";
+        String monster = "  ";
 
         if (laneTile.getHero() != null) {
             hero = labels.get(laneTile.getHero());
