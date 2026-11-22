@@ -1,6 +1,8 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.List;
 
 // Legends of Valor world map: 8x8 grid with 3 lanes
 // Each lane is 2 tiles wide, and lanes are separated by a wall of inaccessible tiles
@@ -169,6 +171,15 @@ public class ValorMap extends Grid<Tile> {
         labels.remove(monster);
     }
 
+    // called when a hero faints as it moves back to its nexus
+    public void removeHero(Hero hero) {
+        int[] pos = positions.remove(hero);
+
+        if (pos != null) {
+            leaveTile(hero, pos[0], pos[1]);
+        }
+    }
+
     // triggered by the recall action of hero
     public boolean recallHero(Hero hero) {
         int[] pos = positions.get(hero);
@@ -236,6 +247,96 @@ public class ValorMap extends Grid<Tile> {
                     return true;
                 }
             } 
+        }
+
+        return false;
+    }
+    //
+    // Block of Methods to determine atatck range and tiles for teleporting
+    //
+
+    // returns its onw tile and every nieghbor: used for detemrining if can attack or cast a spell
+    private List<LaneTile> tilesInRange(int row, int col) {
+        List<LaneTile> tiles = new ArrayList<>();
+        int leftCol = (col / LANE_STRIDE) * LANE_STRIDE;
+
+        for (int r = row-1; r <= row+1; r++) {
+            for (int c = leftCol; c < leftCol + LANE_WIDTH; c++) {
+                if (inBounds(r, c) && getCell(r, c) instanceof LaneTile) {
+                    tiles.add((LaneTile)getCell(r, c));
+                }
+            }
+        }
+
+        return tiles;
+    }
+
+    public List<Monster> getMonstersInRange(Hero hero) {
+        List<Monster> monsters = new ArrayList<>();
+        int[] pos = positions.get(hero);
+        
+        if (pos != null) {
+            for (LaneTile tile: tilesInRange(pos[0], pos[1])) {
+                if (tile.getMonster() != null) {
+                    monsters.add(tile.getMonster());
+                }
+            }
+        }
+
+        return monsters;
+    }
+
+     public List<Hero> getHeroesInRange(Monster monster) {
+        List<Hero> heroes = new ArrayList<>();
+        int[] pos = positions.get(monster);
+        
+        if (pos != null) {
+            for (LaneTile tile: tilesInRange(pos[0], pos[1])) {
+                if (tile.getHero() != null) {
+                    heroes.add(tile.getHero());
+                }
+            }
+        }
+
+        return heroes;
+    }
+
+    // a hero can teleport beside or behind anothe target hero in a diff lane, never on another hero or past a monster in a lane
+    public List<int[]> getTeleportSpots(Hero hero, Hero target) {
+        List<int[]> spots = new ArrayList<>();
+        int[] pos = positions.get(hero);
+        int[] targetPos = positions.get(target);
+
+
+        if (pos == null || targetPos == null || pos[1] / LANE_STRIDE == targetPos[1] / LANE_STRIDE) {
+            return spots;
+        }
+
+        int leftCol = (targetPos[1] / LANE_STRIDE) * LANE_STRIDE;
+        int sideCol = (targetPos[1] == leftCol) ? leftCol + 1 : leftCol;
+        int[][] options = {{targetPos[0], sideCol}, {targetPos[0] + 1, targetPos[1]}};
+
+        for (int[] spot : options) {
+            if (canStand(hero, spot[0], spot[1]) && !skipsEnemy(hero, SIZE, spot[0], spot[1])) {
+                spots.add(spot);
+            }
+        }
+
+        return spots;
+    }
+
+
+    // moves the hero to one of the spots given by getTeleportSpots, true if successful
+    public boolean teleportHero(Hero hero, Hero target, int row, int col) {
+        for (int[] spot: getTeleportSpots(hero, target)) {
+            if (spot[0] == row && spot[1] == col) {
+                int[] pos = positions.get(hero);
+                leaveTile(hero, pos[0], pos[1]);
+                enterTile(hero, row, col);
+                pos[0] = row;
+                pos[1] = col;
+                return  true;
+            }
         }
 
         return false;

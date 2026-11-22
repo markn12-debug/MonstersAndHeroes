@@ -184,6 +184,12 @@ public abstract class Hero extends Combatant {
         }
     }
 
+    // Heroes come back fro mthe dead at their Nexus with restored HP and MP (applicable to Legends of Valor)
+    public void restoreFully() {
+        setHp(getLevel() * HP_PER_LEVEL);
+        mp = maxMp;
+    }
+
     public void revive() {
         setHp(getLevel() * HP_PER_LEVEL / 2);
         mp = maxMp / 2;

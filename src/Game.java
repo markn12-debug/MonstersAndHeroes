@@ -31,7 +31,7 @@ public abstract class Game {
 
             String choice = input.nextLine();
             while(!choice.equals("1") && !choice.equals("2") && !choice.equals("3") && !choice.equals("4") && !choice.equals("5")) {
-                System.out.println("Invalid choice. Please enter 1, 2, 3, or 4.");
+                System.out.println("Invalid choice. Please enter 1, 2, 3, 4 or 5.");
                 choice = input.nextLine();
             }
 

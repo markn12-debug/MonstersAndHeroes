@@ -7,18 +7,25 @@ import java.util.Random;
 
 public class LegendsOfValor extends Game {
     private static final int TEAM_SIZE = 3;
-    private static final int SPAWN_EVERY = 8;
+    private static final int[] SPAWN_RATES = {8, 6, 4}; // configured by difficulty chosen
     private static final Random RANDOM = new Random();
+
+    private static final int GOLD_PER_LEVEL = 500;
+    private static final int EXP_PER_LEVEL = 2;
 
     private Party party;
     private ValorMap map;
+    private HeroActions actions;
     private List<Monster> monsters = new ArrayList<>();
     private int round = 1;
+    private int spawnEvery;
 
     public void play() {
         printInstructions();
+        spawnEvery = chooseDifficulty();
         party = chooseHeroes();
         map = new ValorMap();
+        actions = new HeroActions(input);
         spawnHeroes();
         spawnMonsters();
 
@@ -101,6 +108,10 @@ public class LegendsOfValor extends Game {
     private boolean heroesTurn() {
         List<Hero> heroes = party.getHeroes();
         for (int i = 0; i < heroes.size(); i++) {
+            if (heroes.get(i).isFainted()) {
+                System.out.println("\n" + heroes.get(i).getName() + " is waiting to respawn and skips this turn.");
+                continue;
+            }
             boolean keepPlaying = heroTurn(heroes.get(i), i + 1);
             if (!keepPlaying || map.heroesWon()) {
                 return keepPlaying;
@@ -130,6 +141,24 @@ public class LegendsOfValor extends Game {
             } else if (command.equals("D")) {
                 if (map.move(hero, 0, 1)) { return true; }
                 System.out.println("You can't move there.");
+            } else if (command.equals("F")) {
+                if (actions.attack(hero, map.getMonstersInRange(hero))) {
+                    removeDeadMonsters();
+                    return true;
+                }
+            } else if (command.equals("C")) {
+                if (actions.castSpell(hero, map.getMonstersInRange(hero))) {
+                    removeDeadMonsters();
+                    return true;
+                }
+            } else if (command.equals("E")) {
+                if (equipOrDrink(hero)) {
+                    return  true;
+                }
+            } else if (command.equals("T")) {
+                if (teleport(hero)) {
+                    return  true;
+                }
             } else if (command.equals("R")) {
                 if (map.recallHero(hero)) { return true; }
                 System.out.println("Your Nexus space is taken.");
@@ -147,7 +176,7 @@ public class LegendsOfValor extends Game {
             } else if (command.equals("Q")) {
                 return false;
             } else {
-                System.out.println("That action isn't available yet.");   // F, C, E, T come next
+                System.out.println("Unknown action. Type H for help."); 
             }
         }
     }
@@ -179,21 +208,137 @@ public class LegendsOfValor extends Game {
         }
     }
 
+    // equipping an item or using a potion uses up a turn
+    private boolean equipOrDrink(Hero hero) {
+        System.out.println("1) Change weapon/armor    2) Drink a potion    0) Cancel");
+        int choice = InputHelper.readNumber(input, "Choice: ", 0, 2);
+        if (choice == 1) {
+            return actions.changeEquipment(hero);
+        } else if (choice == 2) {
+            return actions.drinkPotion(hero);
+        }
+
+        return false;
+    }
+
+    // ask which hero to teleport to, and to which spot beside them
+    private boolean teleport(Hero hero) {
+        List<Hero> options = new ArrayList<>();
+        for (Hero other: party.getHeroes()) {
+            if (other != hero && !map.getTeleportSpots(hero, other).isEmpty()) {
+                options.add(other);
+            }
+        }
+
+        if (options.isEmpty()) {
+            System.out.println("There is no hero in another lane that you can teleport to");
+            return false;
+        }
+
+        System.out.println("Teleport next to which hero?");
+        for (int i=0; i < options.size(); i++) {
+            System.out.println((i+1)+ ") " + options.get(i).getName());
+        }
+
+        int pick = InputHelper.readNumber(input, "Hero (0 to cancel): ", 0, options.size());
+        if (pick == 0) {
+            return false;
+        }
+
+        Hero target = options.get(pick - 1);
+        int targetRow = map.getPositions(target)[0];
+        List<int[]> spots = map.getTeleportSpots(hero, target);
+        System.out.println("Where?");
+
+        for(int i =0; i < spots.size(); i++) {
+            String place = (spots.get(i)[0] == targetRow) ? "beside" : "behind";
+            System.out.println((i+1) + ") " + place + " " + target.getName());
+        }
+
+        int spot = InputHelper.readNumber(input, "Spot (0 to cancel): ", 0, spots.size());
+        if (spot == 0) {
+            return false;
+        }
+
+        return map.teleportHero(hero, target, spots.get(spot-1)[0], spots.get(spot-1)[1]);
+    }
+
+    // take the killed mosnters off the map and gives heroes rewards
+    private void removeDeadMonsters() {
+        for (Monster monster: new ArrayList<>(monsters)) {
+            if (monster.isFainted()) {
+                map.removeMonster(monster);
+                monsters.remove(monster);
+                int gold = monster.getLevel() * GOLD_PER_LEVEL;
+                int exp = monster.getLevel() * EXP_PER_LEVEL;
+                System.out.println("Every hero earned " + gold + " gold and " + exp + " EXP.");
+                for (Hero hero: party.getHeroes()) {
+                    hero.earnGold(gold);
+                    hero.gainExperience(exp);
+                }
+            }
+        }
+    }
+
+
+    // a monster can either move forward or attack a hero in range
     private void monstersTurn() {
-        for (Monster monster : monsters) {
-            map.move(monster, 1, 0);
+        for (Monster monster: monsters) {
+            List<Hero> inRange = map.getHeroesInRange(monster);
+            if (!inRange.isEmpty()) {
+                monsterAttack(monster, inRange.get(RANDOM.nextInt(inRange.size())));
+            } else {
+                moveMonster(monster);
+            }
+
+        }
+    }
+
+    private void monsterAttack(Monster monster, Hero target) {
+        if (RANDOM.nextDouble() < target.getDodgeChance()) {
+            System.out.println(target.getName() + " dodged " + monster.getName() + "'s attack!");
+            return; 
+        }
+
+        int dealt = target.receiveAttack(monster.getAttackDamage());
+        System.out.println(monster.getName() + " hit " + target.getName() + " for " + dealt + " damage.");
+        if (target.isFainted()) {
+            System.out.println(target.getName() + " has fainted! They respawn in their Nexus next round.");
+            map.removeHero(target);
+        }
+    }
+
+    // mosnters b ydefault walk forward (S key for hero); if there is an obstacle, they move to the side first
+    private void moveMonster(Monster monster) {
+        if (!map.move(monster, 1, 0) && !map.move(monster, 0, 1)) {
+            map.move(monster, 0, -1);
         }
     }
 
     // Heroes regain some HP/MP, and new monsters show up every few rounds
     private void endRound() {
         for (Hero hero : party.getHeroes()) {
-            hero.regenerate();
+            if (!hero.isFainted()) {
+                hero.regenerate();
+            } else if (map.recallHero(hero)) {
+                hero.restoreFully();
+                System.out.println(hero.getName() + " respawned in their Nexus!");
+            }
         }
         round++;
-        if (round % SPAWN_EVERY == 0) {
+        if (round % spawnEvery == 0) {
             spawnMonsters();
         }
+    }
+
+    private int chooseDifficulty() {
+        System.out.println("\nChoose difficulty (how often new monsters spawn):");
+        System.out.println("1) Easy   - every " + SPAWN_RATES[0] + " rounds");
+        System.out.println("2) Medium - every " + SPAWN_RATES[1] + " rounds");   
+        System.out.println("3) Hard   - every " + SPAWN_RATES[2] + " rounds");
+        int choice = InputHelper.readNumber(input, "Difficulty: ", 1, SPAWN_RATES.length);
+
+        return SPAWN_RATES[choice-1];
     }
 
     // Lets the player pick exactly three heroes, one for each lane
