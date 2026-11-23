@@ -41,6 +41,13 @@ public class Market {
         }
     }
 
+    // Legends of Valor: only the hero standing in the Nexus can shop
+    public void open(Hero hero, Scanner input) {
+        System.out.println("\n===== WELCOME TO THE MARKET =====");
+        shop(hero, input);
+        System.out.println("You leave the market.");
+    }
+
     private void shop(Hero hero, Scanner input) {
         while (true) {
             System.out.println("\n" + hero.getName() + " (Lvl " + hero.getLevel() + ") has "

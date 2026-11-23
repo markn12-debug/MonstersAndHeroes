@@ -125,7 +125,7 @@ public class LegendsOfValor extends Game {
     private boolean heroTurn(Hero hero, int number) {
         while (true) {
             System.out.println("\nH" + number + " " + hero.getName() + "'s turn");
-            System.out.println("W/A/S/D move | F attack | C spell | E equip/potion | T teleport | R recall | O obstacle | M market | I info | P map | H help | Q quit");
+            System.out.println("W/A/S/D move | F attack | C spell | E equip/potion | T teleport | R recall | O obstacle | X pass | M market | I info | P map | H help | Q quit");
             System.out.print("Enter an action: ");
             String command = input.nextLine().trim().toUpperCase();
 
@@ -159,6 +159,9 @@ public class LegendsOfValor extends Game {
                 if (teleport(hero)) {
                     return  true;
                 }
+            } else if (command.equals("X")) {
+                System.out.println(hero.getName() + " waits this turn.");
+                return true;
             } else if (command.equals("R")) {
                 if (map.recallHero(hero)) { return true; }
                 System.out.println("Your Nexus space is taken.");
@@ -204,7 +207,7 @@ public class LegendsOfValor extends Game {
         if (market == null) {
             System.out.println("You can only shop while standing in your Nexus.");
         } else {
-            market.open(party, input);
+            market.open(hero, input);
         }
     }
 
@@ -378,6 +381,7 @@ public class LegendsOfValor extends Game {
         System.out.println("  T = teleport next to a hero in another lane");
         System.out.println("  R = recall to your starting Nexus space");
         System.out.println("  O = remove an obstacle next to you");
+        System.out.println("  X = pass (do nothing this turn)");
         System.out.println("  M = shop at the market (only in your Nexus, doesn't use a turn)");
         System.out.println("  I = show info    P = show the map    H = help    Q = quit");
         System.out.println();
