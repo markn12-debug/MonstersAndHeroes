@@ -41,7 +41,11 @@ public class Grid<T> {
     }
 
     public String toString() {
-        String border = "+--".repeat(size) + "+\n";
+        String border = "+";
+        for (int c = 0; c < size; c++) {
+            border += "--+";
+        }
+        border += "\n";
         String result = border;
         for (int r = 0; r < size; r++) {
             for (int c = 0; c < size; c++) {

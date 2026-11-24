@@ -124,7 +124,7 @@ public class LegendsOfValor extends Game {
     // Returns false only if the player quits
     private boolean heroTurn(Hero hero, int number) {
         while (true) {
-            System.out.println("\nH" + number + " " + hero.getName() + "'s turn");
+            System.out.println("\nH" + number + " " + hero.getName() + "'s turn (HP " + hero.getHp() + ", MP " + hero.getMp() + ")");
             System.out.println("W/A/S/D move | F attack | C spell | E equip/potion | T teleport | R recall | O obstacle | X pass | M market | I info | P map | H help | Q quit");
             System.out.print("Enter an action: ");
             String command = input.nextLine().trim().toUpperCase();
