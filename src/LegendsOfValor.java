@@ -171,7 +171,7 @@ public class LegendsOfValor extends Game {
             } else if (command.equals("M")) {
                 openMarket(hero);
             } else if (command.equals("I")) {
-                party.displayInfo();
+                showInfo();
             } else if (command.equals("P")) {
                 System.out.println(map);
             } else if (command.equals("H")) {
@@ -208,6 +208,21 @@ public class LegendsOfValor extends Game {
             System.out.println("You can only shop while standing in your Nexus.");
         } else {
             market.open(hero, input);
+        }
+    }
+
+    // Shows every hero's stats, then every monster still on the board
+    private void showInfo() {
+        System.out.println("\n===== HEROES =====");
+        party.displayInfo();
+
+        System.out.println("\n===== MONSTERS =====");
+        if (monsters.isEmpty()) {
+            System.out.println("There are no monsters on the board.");
+        }
+        for (Monster monster : monsters) {
+            int[] pos = map.getPositions(monster);
+            System.out.println(monster + "  (row " + (pos[0] + 1) + ", column " + (pos[1] + 1) + ")");
         }
     }
 
@@ -372,6 +387,8 @@ public class LegendsOfValor extends Game {
         System.out.println();
         System.out.println("Each round, every hero takes one action, then every monster");
         System.out.println("either attacks a nearby hero or moves one space down.");
+        System.out.println("A hero that faints respawns in their Nexus at the end of the round.");
+        System.out.println("Every monster killed gives each hero gold and experience.");
         System.out.println();
         System.out.println("HERO ACTIONS (type a letter and press Enter):");
         System.out.println("  W/A/S/D = move up/left/down/right");
@@ -383,7 +400,7 @@ public class LegendsOfValor extends Game {
         System.out.println("  O = remove an obstacle next to you");
         System.out.println("  X = pass (do nothing this turn)");
         System.out.println("  M = shop at the market (only in your Nexus, doesn't use a turn)");
-        System.out.println("  I = show info    P = show the map    H = help    Q = quit");
+        System.out.println("  I = show hero and monster info    P = show the map    H = help    Q = quit");
         System.out.println();
         System.out.println("MAP:  N = Nexus   I = inaccessible   O = obstacle   P = plain");
         System.out.println("      B = bush (+dexterity)   C = cave (+agility)   K = koulou (+strength)");
